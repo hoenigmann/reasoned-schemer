@@ -1,1 +1,97 @@
 The Reasoned Schemer
+
+To run the chicken scheme ctrl-u alt x run scheme  then specify: csi
+as the scheme to run
+
+* 2.20
+  What value is associated with x in
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    
+    (test "Associate the cdr of the list with"
+          '(o)
+          (run* (x)
+            (cdro '(c o r n) `(,x r n))))
+    
+    (test "Unify a list of symbols with another list that has a fresh variable in it"
+          '()
+          (run* (x)
+             (== '(c o r n) `(c ,x r n))))
+  #+END_SRC
+
+* 2.21
+
+What value is associated with l in
+
+
+#+BEGIN_SRC scheme
+  
+  (use mini-kanren)
+  (use test)
+  
+  (test "The car and cdr of a list to be"
+        '(a)
+        (run* (x)
+          (fresh (l)
+            (cdro l '(c o r n))
+            (caro l x)
+            (== 'a x))))
+#+END_SRC
+
+* 2.22
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    (test "Something" '()
+          (run* (x)
+            (conso '(a b c) '(d e) x)))
+    
+  #+END_SRC
+
+* 2.23
+
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    (test "Cons'ing a fresh variable then unifying the cons with a fresh variable"
+          '()
+          (run* (x)
+            (conso x '(a b c) '(d a b c))))
+  #+END_SRC
+
+* 2.24
+  What value is associated with r in
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    (test "Something"
+          '((e a d c))
+          (run* (r)
+            (fresh (x y z)
+              (== `(e a d ,x) r)
+              (conso y `(a ,z c) r))))
+  #+END_SRC
+
+* 2.25
+
+  What value is associated with x in 
+
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    (test "Something"
+          '(d)
+          (run* (a)
+            
+            (fresh (x l)
+              (== l `(d a ,x c))
+              (conso x `(a ,x c) l)
+              (== a l)
+              )))
+    
+  #+END_SRC
