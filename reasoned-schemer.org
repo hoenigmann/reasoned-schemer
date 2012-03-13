@@ -3,6 +3,29 @@ The Reasoned Schemer
 To run the chicken scheme ctrl-u alt x run scheme  then specify: csi
 as the scheme to run
 
+* 1.57
+  #+BEGIN_SRC scheme
+    (use mini-kanren test)
+    
+    (define teacupo
+      (lambda (x)
+        (conde ((== 'tea x) succeed)
+               ((== 'cup x) succeed)
+               (else fail))))
+    
+    (test "conde within a conde (in a function)"
+          `((tea #t) (cup #t) (#t #f))
+          (run* (r)
+            (fresh (x y)
+              (conde
+               ((teacupo x) (== #t y) succeed)
+               ((teacupo x) (teacupo y) succeed)
+               ((== x #t) (== y #f))
+               (else fail))
+              (== (cons x (cons y '())) r))))
+    
+  #+END_SRC
+
 * 2.20
   What value is associated with x in
   #+BEGIN_SRC scheme
@@ -94,4 +117,261 @@ What value is associated with l in
               (== a l)
               )))
     
+  #+END_SRC
+
+* 2.29
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    (test "By the book"
+          '(b e a n s)
+          (run* (l)
+            (fresh (d x y w s)
+              (conso w '(a n s) s)
+              (cdro l s)
+              (caro l x)
+              (== 'b x)
+              (cdro l d)
+              (caro d y)
+              (== 'e y))))
+    
+    (test "By the book"
+          '(b e a n s)
+          (run* (l)
+            (fresh (d x y w s)
+              (conso w '(a n s) s)
+              (cdro l s)
+              (caro l x)
+              (== 'b x)
+              (caro s y)
+              (== 'e y)
+              )))
+    
+    (test "By the book"
+          '(b e a n s)
+          (run* (l)
+            (fresh (d x y w s)
+              (conso w '(a n s) s)
+              (cdro l s)
+              (caro l x)
+              (== 'b x)
+              (== 'e w))))
+  #+END_SRC
+* 3.1
+  Consider the definition of list:
+  #+BEGIN_SRC scheme
+    (define list?
+      (lambda (l)
+        (cond
+         ((null? l) #t)
+         ((pair? l) (list? (cdr l)))
+         #f)))
+  #+END_SRC
+
+What is the value of: 
+
+#+BEGIN_SRC scheme
+  (use test)
+  
+  (test "Comment"
+        #t
+        (list? `((a) (a b) c)
+               ))
+#+END_SRC
+
+* 3.2
+  What is the value of 
+  #+BEGIN_SRC scheme
+    (use test)
+    
+    (test "I think the value is true because its null"
+          #t
+          (list? `() ))
+  #+END_SRC
+
+* 3.3
+  What is the value of
+  #+BEGIN_SRC scheme
+    (use test)
+    
+    (test "I think the value is false because the symbol s is not a null list and it is not a pair"
+          #f
+          (list? `s ))
+  #+END_SRC
+* 3.4
+  Consider the definition of listo:
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    (define listom
+      (lambda (l)
+        (conde
+         ((nullo l) succeed)
+         ((pairo l)
+          (fresh (d)
+            (cdro l d)
+            (listom d)))
+          (else fail))))
+    
+    (test "I think this implementation of listo works"
+          succeed
+          (run* (x)
+            (== x (listom `() ))))
+  #+END_SRC
+
+  How does listo differ from list?
+
+  List has goals as questions and answers.
+
+  What is returned by a run of listom is not understood.
+
+* 3.5
+  Where does:
+
+  #+BEGIN_SRC scheme
+    (fresh (d)
+      (cdro l d)
+      (listo d))
+  #+END_SRC
+
+  come from?
+
+  Imagine: (listo (cdro l))
+  
+  cdro l is not possible because cdro takes to args, further more
+  cdro returns ad goal something that is not a list.  So pull it
+  apart, take the listo of what is unified to in the cdro.
+
+  Book answer:
+  It is an unesting of (list? (cdr l)).  
+
+* The First Commandment
+  To transform a function whole value is a Boolean into a function
+* Definition of caro
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    (define caro
+    
+      (lambda (list first)
+        (fresh (rest)
+          (== list `(,first . ,rest)))))
+    
+    (test "caro passed fresh fresh"
+          '((_.0 . _.1))
+          (run* (x)
+            (fresh (a b)
+              (caro a b)
+              (== a x))))
+    (test "caro passed list3 fresh"
+          '(a)
+          (run* (x)
+            (fresh (f)
+              (caro '(a b c) x))))
+    (test "caro passed fresh list3"
+          '(a b c)
+          (run* (x)
+            (fresh (f)
+              (caro x '(a b c)))))
+    (test "caro passed list3 element"
+          '(a)
+          (run* (x)
+            (== x 'a)
+            (caro '(a b c) x)))
+    
+    ;;; 2 .. n
+    (define cdro
+      (lambda (list rest)
+        (fresh (first)
+          (== list `(,first . ,rest)))))
+    
+    ;;; 3 .. n
+    (define thirdo
+      (lambda (list rest)
+        (fresh (first second)
+          (== list `(,first ,second . ,rest)))))
+  #+END_SRC
+* Definition of conso
+  #+BEGIN_SRC scheme
+    (define conso
+      (lambda (a d p)
+        (== (cons a d) p)))
+  #+END_SRC
+* Definition of pairo
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    
+    (define pairo
+      (lambda (p)
+        (fresh (a d)
+          (conso a d p))))
+  #+END_SRC
+* Definition of listo
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    
+    (define listo
+      (lambda (l)
+        (conde
+         ((nullo l) succeed)
+         ((pairo l)
+          (fresh (d)
+            (cdro l d)
+            (listo d)))
+         (else fail))))
+  #+END_SRC
+* 3.7
+  What value is associated with x in:
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    (use test)
+    
+    (run* (x)
+      (listo `(a b ,x d)))
+    
+  #+END_SRC
+  _.0  because a fresh can unify with a fresh
+* 3.9
+  What is the value associated with x in:
+  #+BEGIN_SRC scheme
+        (use mini-kanren)
+    (use test)
+    
+        (test "Hypothesis: Eventually nullo is called and associates '() with x"
+              '()
+              (run 1 (x)
+              (listo `(a b c . ,x))))
+  #+END_SRC
+  
+* Definition of lolo
+  #+BEGIN_SRC scheme
+    (use mini-kanren)
+    
+    (define lolo
+      (lambda (l)
+        (conde
+         ((nullo l) succeed)
+         (fresh (a)
+           (caro l a)
+           (listo a))
+         (fresh (d)
+           (cdr l d)
+           (lolo d))
+         (else fail))))
+  #+END_SRC
+
+* 3.17
+  The definition of lolo differs from lol? in that it unests questions
+  and answers.
+* 3.18
+  What else is different?
+  It uses conde instead of cond, returning #s instead of #t and fail
+  instead of false
+
+* 3.19
+  #+BEGIN_SRC scheme
+
   #+END_SRC
