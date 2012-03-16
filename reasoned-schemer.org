@@ -26,6 +26,35 @@ as the scheme to run
     
   #+END_SRC
 
+  What happens if you add the line:
+  ((teacupo x) (teacupo x) #s) ?
+
+  Problems reduces to:
+  #+BEGIN_SRC scheme
+    (use mini-kanren test)
+    
+    (define teacupo
+      (lambda (x)
+        (fresh (x) (conde
+          ((== x `tea) succeed)
+          ((== x `cup) succeed)
+          (else fail)))))
+    
+    (run* (r)
+      (fresh (x)
+        (conde
+         ((teacupo x) (teacupo x) succeed))
+        (== x r))) 
+  #+END_SRC
+
+  All conde lines are executed but the inner conde lines resulting from the
+  call to (teacupo x) as an answer to the outer conde only succeed two
+  out of the four times.  
+
+* 1.58
+  #+BEGIN_SRC scheme
+
+  #+END_SRC
 * 2.20
   What value is associated with x in
   #+BEGIN_SRC scheme
@@ -157,6 +186,7 @@ What value is associated with l in
               (caro l x)
               (== 'b x)
               (== 'e w))))
+    
   #+END_SRC
 * 3.1
   Consider the definition of list:
@@ -166,7 +196,8 @@ What value is associated with l in
         (cond
          ((null? l) #t)
          ((pair? l) (list? (cdr l)))
-         #f)))
+         (else #f))))
+    
   #+END_SRC
 
 What is the value of: 
@@ -354,14 +385,59 @@ What is the value of:
       (lambda (l)
         (conde
          ((nullo l) succeed)
-         (fresh (a)
-           (caro l a)
-           (listo a))
-         (fresh (d)
-           (cdr l d)
-           (lolo d))
+         ((fresh (a)
+            (caro l a)
+            (listo a))
+          (fresh (d)
+            (cdro l d)
+            (lolo d)))
          (else fail))))
+    
   #+END_SRC
+* 3.14
+  What is the value of:
+  #+BEGIN_SRC scheme
+    (use mini-kanren test)
+    
+    (run 5 (x)
+         (listo `(a b c . ,x)))
+  #+END_SRC
+  
+  When x is fresh, listo uses nullo to get '().
+  listo also uses a pairo in it's conde.
+  Think: To get more values from conde...
+  So when x is fresh and we pretend the first conde line inside listo
+  has failed, listo then uses pairo, pairo does a conso of two fresh
+  variables to get "fresh pair" i.e. ( _.0 _.1 ). This "fresh pair" is
+  then unified with the fresh variable being evaluated under pairo, so
+  the goal pairo then succeeds and the answer is evaluated. The answer
+  is recursive so this results in another call to listo for the cdr of
+  the fresh pair.  At this point each conde line is again evaluated to
+  "get more values".  nullo ends the result, but pairo ends up
+  appending another fresh variable to the list because pairo is
+  ultimately a binder of a pair of fresh variables to its argument
+  when that argument is fresh.
+
+  So () is due to the first nullo line succeeding
+       (-0) pretend nullo fails, pair succeeds then in recursive
+       call to listo nullo succeeds.
+       (-0 -1) pretend nullo fails so pairo succeeds, recursive call
+       to listo pretending nullo fails, so pairo succeeds, then
+       recursive call to listo made in which nullo succeeds. 
+
+       ... Therefore every recursive call to listo in the case of
+       pretending nullo fails ends up appending another fresh variable to
+       the list (when its conde nullo line fails) or continuing this
+       recursive pattern.
+
+   So what can we conclude about the recursive structure?
+
+   Is it the conde's withing conde's providing the different values of
+   l?
+
+   Is it the "fresh pair" construction in pairo?   How does (run* ...)
+   (run 5 ...) interaction with recursive execution and or the conde
+   within conde structure?
 
 * 3.17
   The definition of lolo differs from lol? in that it unests questions
@@ -371,7 +447,29 @@ What is the value of:
   It uses conde instead of cond, returning #s instead of #t and fail
   instead of false
 
-* 3.19
+* 3.21
   #+BEGIN_SRC scheme
-
+    (use test)
+    (use mini-kanren)
+    
+    (define lolo
+      (lambda (l)
+        (conde
+         ((nullo l) succeed)
+         ((fresh (a)
+            (caro l a)
+            (listo a))
+          (fresh (d)
+           (cdr l d)
+           (lolo d)))
+         (else fail))))
+    
+    (run* (q)
+      
+      (fresh (x y)
+        (lolo '())
+        (== #t q)))
+    
   #+END_SRC
+
+
