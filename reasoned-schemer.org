@@ -439,6 +439,9 @@ What is the value of:
    (run 5 ...) interaction with recursive execution and or the conde
    within conde structure?
 
+   Conde structure branches goals.  Each line has its own
+   context/scope.  If its question and answer both succeed it results
+   in constructing a value for x.  Run evaluates the branches.
 * 3.17
   The definition of lolo differs from lol? in that it unests questions
   and answers.
