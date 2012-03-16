@@ -450,7 +450,7 @@ What is the value of:
   It uses conde instead of cond, returning #s instead of #t and fail
   instead of false
 
-* 3.21
+* 3.21 3.22 3.23 3.24
   #+BEGIN_SRC scheme
     (use test)
     (use mini-kanren)
@@ -463,16 +463,37 @@ What is the value of:
             (caro l a)
             (listo a))
           (fresh (d)
-           (cdr l d)
+           (cdro l d)
            (lolo d)))
          (else fail))))
     
     (run* (q)
       
       (fresh (x y)
-        (lolo '())
+        (lolo '((a b) (,x c) (d ,y)) )
         (== #t q)))
     
+    ;;; 3.22
+    ;;; What value is associated with q in:
+    (run 1 (q)
+         (fresh (x)
+           (lolo `((a b) . ,x) )))
+    
+    
+    
+  #+END_SRC
+
+
+* Experiment using reify
+
+  The list will be printed out as (_.0 _.1) always regardless if cons
+  is ordered: xy or: yx.
+  #+BEGIN_SRC scheme
+    (use mini-kanren test)
+    
+    (run* (r)
+      (fresh (x y)
+        (== (cons y x) r)))
   #+END_SRC
 
 
