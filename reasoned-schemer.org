@@ -551,7 +551,7 @@ What is the value of:
   It appears so.  So listo only executes it first conde line in the
   context of lolo.  Then, a recursive branching occurs from lolo only,
   meaning both conde lines of lolo are evaluated.  On the fifth
-  branching only the first conde line of lalo gets evaluated.  This is
+  branching only the first conde line of lolo gets evaluated.  This is
   weird, why does listo stop at its "base case" (nullo all the time) ?
 
   Observe that the recursive call to lolo occurs in the answer of the
