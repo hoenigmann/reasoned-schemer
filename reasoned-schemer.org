@@ -477,13 +477,89 @@ What is the value of:
     ;;; What value is associated with q in:
     (run 1 (q)
          (fresh (x)
-           (lolo `((a b) . ,x) )))
+           (lolo `((a b) . ,x) )
+           (== #t q)))
+    
+    ;; #t
+    
+    
+    ;;; 3.23
+    ;;; What is the value of:
+    (run 1 (x)
+         (lolo `((a b) (c d) . ,x)))
+    
+    ;;; (-0 -1) -> ( () -1 ) question. -> ( () () ) answer.
+    ;;; so x is ( () ).
+    
+    
+    ;;; 3.24
+    ;;; What is the value of:
+    (run 5 (x)
+         (lolo `((a b) (c d) . ,x)))
+    
+   
+    
+    
+    
+    
     
     
     
   #+END_SRC
 
+* 3.24 Notes
+  This question demonstrates a good understanding of the book to this
+  point if answered correctly.  
+  
+  Have difficulty answering this question in whole so it helps to
+  break it down.
 
+  What is the nature of the argument passed to listo at any point in
+  the execution of lolo? 
+
+  There are three points that listo takes on different types of
+  arguments, the two trivial cases of (a b) and (c d). Then, the case
+  of the fresh variable introduced by x in the 3.24 question.
+
+  What does passing a fresh variable to listo result in?
+  The same structure as question 3.14 (i.e () (_.0) (_.0 _.1) (_.0 _.1
+  _.2))
+
+  So does listo act the same as a nullo in 3.24?
+
+  #+BEGIN_SRC scheme
+    (use mini-kanren test)
+    
+    (define lolo
+      (lambda (l)
+        (conde
+         ((nullo l) succeed)
+         ((fresh (a)
+            (caro l a)
+            (nullo a))
+          (fresh (d)
+            (cdro l d)
+            (lolo d)))
+         (else fail))))
+    
+    (run 5 (x)
+         (lolo x))
+  #+END_SRC
+
+  Result: (() (()) (() ()) (() () ()) (() () () ()))
+
+  It appears so.  So listo only executes it first conde line in the
+  context of lolo.  Then, a recursive branching occurs from lolo only,
+  meaning both conde lines of lolo are evaluated.  On the fifth
+  branching only the first conde line of lalo gets evaluated.  This is
+  weird, why does listo stop at its "base case" (nullo all the time) ?
+
+  Observe that the recursive call to lolo occurs in the answer of the
+  conde line.
+ 
+  From Peter: Can you make some argument wheter run goes depth or breadth first?
+
+  
 * Experiment using reify
 
   The list will be printed out as (_.0 _.1) always regardless if cons
